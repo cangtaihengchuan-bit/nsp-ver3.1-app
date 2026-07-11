@@ -323,6 +323,47 @@ h3 {
   font-weight: 900;
 }
 
+.household-loading {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  font-weight: 900;
+}
+
+.household-loading[hidden] {
+  display: none;
+}
+
+.reload-button {
+  width: fit-content;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: var(--panel);
+  font-weight: 900;
+}
+
+.is-loading-value {
+  min-height: 1.45rem;
+  color: transparent !important;
+  border-radius: 6px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--line) 50%, transparent), color-mix(in srgb, var(--panel) 92%, transparent), color-mix(in srgb, var(--line) 50%, transparent));
+  background-size: 220% 100%;
+  animation: loadingShimmer 1.2s linear infinite;
+}
+
+@keyframes loadingShimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
 .daily-budget strong {
   color: var(--coral);
   font-size: 1.7rem;
@@ -2257,9 +2298,9 @@ h3 {
           </form>
           <button id="householdLogoutBtn" class="session-logout" type="button" hidden>ログアウト</button>
           <a class="experience-link" href="./index.html">体験トップ</a>
+          <a class="experience-link" href="./shopping.html">買い物メモ</a>
           <a class="experience-link" href="./app.html">割引メモ</a>
           <a class="experience-link primary" href="./household.html" aria-current="page">家計簿</a>
-          <a class="experience-link" href="./shopping.html">買い物メモ</a>
         </div>
       </nav>
       <header class="top-bar" aria-label="家計簿の概要">
@@ -2321,6 +2362,11 @@ h3 {
           <small id="dailyBudgetNote">残り日数で日割り</small>
         </div>
       </header>
+
+      <div id="householdLoading" class="household-loading" hidden>
+        <span id="householdLoadingText">生活費を読み込んでいます</span>
+        <button id="reloadHouseholdBtn" class="reload-button" type="button" hidden>再読み込み</button>
+      </div>
 
       <nav class="view-tabs" aria-label="ページ切り替え">
         <button class="tab-button is-active" type="button" data-view="calendarView">カレンダー</button>
@@ -2728,6 +2774,9 @@ const els = {
   receiptMergeBar: document.querySelector("#receiptMergeBar"),
   receiptMergeCount: document.querySelector("#receiptMergeCount"),
   receiptMergeBtn: document.querySelector("#receiptMergeBtn"),
+  householdLoading: document.querySelector("#householdLoading"),
+  householdLoadingText: document.querySelector("#householdLoadingText"),
+  reloadHouseholdBtn: document.querySelector("#reloadHouseholdBtn"),
   emptyTemplate: document.querySelector("#emptyTemplate"),
   monthlyChart: document.querySelector("#monthlyChart"),
 };
@@ -2751,6 +2800,7 @@ async function init() {
   els.applyBudgetCurrent.addEventListener("click", () => applyBudgetToCurrentMonth());
   els.applyBudgetFuture.addEventListener("click", () => applyBudgetFromCurrentMonth());
   els.applyBudgetAll.addEventListener("click", () => applyBudgetToAllMonths());
+  els.reloadHouseholdBtn.addEventListener("click", reloadHouseholdData);
   els.form.addEventListener("submit", addExpense);
   els.incomeForm.addEventListener("submit", addIncome);
   els.fixedCostForm.addEventListener("submit", addFixedCost);
@@ -2803,17 +2853,22 @@ async function init() {
   });
 
   setView(state.activeView, false);
+  let householdLoadFailed = false;
   if (currentUserId()) {
+    setHouseholdLoading(true);
     try {
       await migrateHouseholdLocalIfRemoteEmpty();
       await loadHouseholdFromSupabase();
+      setHouseholdLoading(false);
     } catch {
+      householdLoadFailed = true;
+      setHouseholdLoadError();
       if (sessionPill) {
         sessionPill.textContent = `${sessionPill.textContent} / 家計簿同期未設定`;
       }
     }
   }
-  render();
+  if (!householdLoadFailed) render();
   const entryDate = new URLSearchParams(location.search).get("entry");
   if (entryDate) openEntryModal(entryDate);
 }
@@ -2912,9 +2967,7 @@ async function signIn(email, password) {
   if (!email || !password) return;
   const data = await authRequest("token?grant_type=password", { email, password });
   saveSession(data);
-  await migrateHouseholdLocalIfRemoteEmpty();
-  await loadHouseholdFromSupabase();
-  render();
+  await reloadHouseholdData();
 }
 
 async function signUp(email, password) {
@@ -2922,11 +2975,45 @@ async function signUp(email, password) {
   const data = await authRequest("signup", { email, password });
   if (data?.access_token) {
     saveSession(data);
-    await migrateHouseholdLocalIfRemoteEmpty();
-    await loadHouseholdFromSupabase();
-    render();
+    await reloadHouseholdData();
   } else if (sessionPill) {
     sessionPill.textContent = "登録メールを確認してください";
+  }
+}
+
+function setHouseholdLoading(isLoading) {
+  els.householdLoading.hidden = !isLoading;
+  els.householdLoadingText.textContent = "生活費を読み込んでいます";
+  els.reloadHouseholdBtn.hidden = true;
+  [els.budgetValue, els.spent, els.remaining, els.dailyBudget].forEach((node) => {
+    node.classList.toggle("is-loading-value", isLoading);
+    if (isLoading) node.textContent = "読み込み中";
+  });
+  els.grid.hidden = isLoading;
+}
+
+function setHouseholdLoadError() {
+  els.householdLoading.hidden = false;
+  els.householdLoadingText.textContent = "生活費を読み込めませんでした";
+  els.reloadHouseholdBtn.hidden = false;
+  [els.budgetValue, els.spent, els.remaining, els.dailyBudget].forEach((node) => {
+    node.classList.remove("is-loading-value");
+    node.textContent = "-";
+  });
+  els.grid.hidden = true;
+}
+
+async function reloadHouseholdData() {
+  if (!currentUserId()) return;
+  setHouseholdLoading(true);
+  try {
+    await migrateHouseholdLocalIfRemoteEmpty();
+    await loadHouseholdFromSupabase();
+    setHouseholdLoading(false);
+    render();
+  } catch {
+    setHouseholdLoadError();
+    if (sessionPill) sessionPill.textContent = `${sessionPill.textContent} / 読み込み失敗`;
   }
 }
 
@@ -2950,7 +3037,8 @@ async function supabaseRequest(path, options = {}) {
     throw new Error(message || `Supabase request failed: ${response.status}`);
   }
   if (response.status === 204) return null;
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 async function signOut() {

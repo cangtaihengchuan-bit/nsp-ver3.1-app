@@ -254,6 +254,14 @@
         color: var(--coral);
       }
 
+      .budget-warning {
+        margin: 0;
+        color: var(--coral);
+        font-size: 0.78rem;
+        font-weight: 900;
+        line-height: 1.4;
+      }
+
       .quick-add {
         display: grid;
         gap: 10px;
@@ -781,9 +789,9 @@
           </form>
           <button id="shoppingLogoutBtn" class="session-logout" type="button" hidden>ログアウト</button>
           <a class="experience-link" href="./index.html">体験トップ</a>
+          <a class="experience-link primary" href="./shopping.html" aria-current="page">買い物メモ</a>
           <a class="experience-link" href="./app.html">割引メモ</a>
           <a class="experience-link" href="./household.html">家計簿</a>
-          <a class="experience-link primary" href="./shopping.html" aria-current="page">買い物メモ</a>
         </div>
       </nav>
 
@@ -808,6 +816,7 @@
           <div id="plannedRemainingCard" class="budget-card remaining">
             <span>残り</span>
             <strong id="plannedRemaining">¥0</strong>
+            <p id="plannedWarning" class="budget-warning" hidden></p>
           </div>
         </section>
 
@@ -975,6 +984,7 @@
         plannedShoppingTotal: document.querySelector("#plannedShoppingTotal"),
         plannedRemaining: document.querySelector("#plannedRemaining"),
         plannedRemainingCard: document.querySelector("#plannedRemainingCard"),
+        plannedWarning: document.querySelector("#plannedWarning"),
         quickItemChips: document.querySelector("#quickItemChips"),
         quickAmountChips: document.querySelector("#quickAmountChips"),
         candidates: document.querySelector("#discountCandidates"),
@@ -1222,7 +1232,8 @@
           throw new Error(message || `Supabase request failed: ${response.status}`);
         }
         if (response.status === 204) return null;
-        return response.json();
+        const text = await response.text();
+        return text ? JSON.parse(text) : null;
       }
 
       function shoppingItemToRow(item) {
@@ -1521,6 +1532,13 @@
         els.plannedShoppingTotal.textContent = yen.format(planned);
         els.plannedRemaining.textContent = yen.format(remaining);
         els.plannedRemainingCard.classList.toggle("is-over", remaining < 0);
+        if (remaining < 0) {
+          els.plannedWarning.textContent = `今日の目安を${yen.format(Math.abs(remaining))}超えています`;
+          els.plannedWarning.hidden = false;
+        } else {
+          els.plannedWarning.textContent = "";
+          els.plannedWarning.hidden = true;
+        }
       }
 
       function todayBudgetEstimate() {

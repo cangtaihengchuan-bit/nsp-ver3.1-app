@@ -200,6 +200,10 @@
         overflow-wrap: anywhere;
       }
 
+      h1 span {
+        display: inline;
+      }
+
       p {
         max-width: 620px;
         margin: 0;
@@ -217,18 +221,25 @@
 
       .flow-strip {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
       }
 
       .flow-step {
         display: grid;
         gap: 5px;
-        min-height: 104px;
+        min-height: 112px;
         padding: 13px;
         border: 1px solid var(--line);
+        border-left: 4px solid var(--mint);
         border-radius: 8px;
         background: color-mix(in srgb, var(--paper) 90%, transparent);
+      }
+
+      .flow-step small {
+        color: var(--mint);
+        font-size: 0.76rem;
+        font-weight: 950;
       }
 
       .flow-step strong {
@@ -244,12 +255,14 @@
 
       .actions {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
       }
 
       a {
-        min-height: 78px;
+        min-height: 62px;
         display: grid;
         align-content: center;
         gap: 4px;
@@ -272,6 +285,11 @@
         color: inherit;
         opacity: 0.78;
         font-size: 0.86rem;
+      }
+
+      .actions a {
+        min-height: 58px;
+        background: transparent;
       }
 
       .secondary-link {
@@ -313,7 +331,11 @@
         }
 
         h1 {
-          font-size: clamp(2rem, 11vw, 2.65rem);
+          font-size: 2.1rem;
+        }
+
+        h1 span {
+          display: block;
         }
       }
       :root {
@@ -508,7 +530,7 @@
         </div>
 
         <details id="authBox" class="auth-box" aria-label="ログイン">
-          <summary>保存・同期する</summary>
+          <summary>ログイン・テーマ変更</summary>
           <div class="auth-tools">
             <label class="theme-control">
               <span>カラー</span>
@@ -535,9 +557,9 @@
         </details>
       </div>
 
-      <h1>生活費を見ながら、買い物を決める。</h1>
+      <h1><span>生活費を見ながら、</span><span>買い物を決める。</span></h1>
       <p>
-        一人暮らしの食費・日用品・交通費を、買う前と買った後に短時間で確認できます。
+        一人暮らしの食費・日用品・交通費を、買う前と買った後に確認できます。
         ログインしなくても、まずは買い物メモと割引メモを試せます。
       </p>
       <div class="hero-actions">
@@ -552,30 +574,28 @@
       </div>
       <section class="flow-strip" aria-label="使い方の流れ">
         <div class="flow-step">
-          <strong>割引情報を確認</strong>
-          <span>よく行く店の価格やセール日をメモします。</span>
+          <small>買う前</small>
+          <strong>予定と価格を確認</strong>
+          <span>買い物メモで必要なものを整理し、割引メモで価格やセール日を確認します。</span>
         </div>
         <div class="flow-step">
-          <strong>買い物メモに追加</strong>
-          <span>必要なものと目安金額を買う前に整理します。</span>
-        </div>
-        <div class="flow-step">
-          <strong>支出として記録</strong>
-          <span>買った後は家計簿に入れて、残り予算を確認します。</span>
+          <small>買った後</small>
+          <strong>支出と残り予算を確認</strong>
+          <span>家計簿へ支出を登録し、今月の生活費がどのくらい残っているか確認します。</span>
         </div>
       </section>
       <div class="actions">
-        <a href="./app.html">
-          割引メモを開く
-          <span>安く買えるものを確認</span>
-        </a>
-        <a href="./household.html">
-          家計簿を開く
-          <span>今月の生活費と残り予算</span>
-        </a>
         <a href="./shopping.html">
           買い物メモを開く
           <span>買い物予定が予算内か確認</span>
+        </a>
+        <a href="./app.html">
+          割引メモを開く
+          <span>価格やセール日を確認</span>
+        </a>
+        <a href="./household.html">
+          家計簿を開く
+          <span>生活費と残り予算を確認</span>
         </a>
       </div>
     </main>

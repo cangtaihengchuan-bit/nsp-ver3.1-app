@@ -303,6 +303,51 @@
         margin-top: 9px;
       }
 
+      .required-mark {
+        color: var(--coral);
+        font-size: 0.72rem;
+        font-weight: 950;
+      }
+
+      .field-error {
+        min-height: 1.1em;
+        color: #d85e49;
+        font-size: 0.78rem;
+        font-weight: 900;
+        line-height: 1.35;
+      }
+
+      .schedule-label.has-error input,
+      .schedule-label.has-error select {
+        border-color: #d85e49;
+        box-shadow: 0 0 0 2px color-mix(in srgb, #d85e49 20%, transparent);
+      }
+
+      .data-management {
+        margin: 14px 0;
+        padding: 12px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      .data-management summary {
+        color: var(--ink);
+        font-weight: 900;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .data-management summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .danger-button {
+        border-color: #b94b3a;
+        color: #fff;
+        background: #b94b3a;
+      }
+
       .auth-panel {
         position: sticky;
         top: 0;
@@ -1739,9 +1784,9 @@
         </div>
         <div class="experience-links">
           <a class="experience-link" href="./index.html">体験トップ</a>
+          <a class="experience-link" href="./shopping.html">買い物メモ</a>
           <a class="experience-link primary" href="./app.html" aria-current="page">割引メモ</a>
           <a class="experience-link" href="./household.html">家計簿</a>
-          <a class="experience-link" href="./shopping.html">買い物メモ</a>
         </div>
       </section>
 
@@ -1753,7 +1798,7 @@
             <a class="back-link" href="./index.html">体験トップ</a>
           </div>
           <h1>
-            <span>近くの割引情報を保存して、家計簿にも反映。</span>
+            <span>近くの価格やセール日を保存して、買い物前に確認。</span>
           </h1>
         </div>
         <div class="hero-controls">
@@ -1780,8 +1825,8 @@
           <p class="location-use-note">近くの店舗を探す場合だけ、現在地を使います。</p>
           <button id="locateBtn" class="btn btn-ghost" type="button">近くの割引を探す</button>
           <button id="savedLocationBtn" class="btn btn-ghost" type="button">登録地点から探す</button>
-          <a class="btn btn-ghost" href="./household.html">家計簿を開く</a>
           <a class="btn btn-ghost" href="./shopping.html">買い物メモを開く</a>
+          <a class="btn btn-ghost" href="./household.html">家計簿を開く</a>
         </div>
       </section>
 
@@ -1790,8 +1835,13 @@
           <span id="statusDot" class="dot"></span>
           <span id="statusText">位置情報を許可すると、近くのスーパーとドラッグストアから割引候補を探します。</span>
         </div>
-        <button id="clearAllBtn" class="btn btn-ghost" type="button">保存メモを全削除</button>
       </section>
+
+      <details class="data-management">
+        <summary>データ管理</summary>
+        <p class="muted">保存済みの割引メモをまとめて削除します。ログイン中はクラウド上の自分のデータも対象です。</p>
+        <button id="clearAllBtn" class="btn danger-button" type="button">保存済み割引を全削除</button>
+      </details>
 
       <section id="locationPanel" class="location-panel hidden-panel" aria-label="登録地点から探す">
         <div class="panel-head">
@@ -1853,7 +1903,7 @@
             </select>
           </label>
           <details class="share-details">
-            <summary>共有設定</summary>
+            <summary>共有された割引情報を表示する</summary>
             <p class="share-note">店名・商品名・価格・割引日だけを扱います。個人情報や店舗ラベルは共有されません。</p>
             <label class="share-toggle">
               <input id="acceptSharedDiscounts" type="checkbox" />
@@ -1880,7 +1930,7 @@
           <div id="storeList" class="store-list"></div>
         </aside>
 
-        <section class="workspace" aria-label="店舗別価格メモ">
+        <section class="workspace" aria-label="店舗別割引メモ">
           <div id="emptyState" class="empty">
             <div>
               <h2>店舗を選択してください</h2>
@@ -1898,24 +1948,24 @@
               <button id="mapBtn" class="btn btn-ghost" type="button">地図で開く</button>
             </div>
 
-            <form id="itemForm" class="item-form">
+            <form id="itemForm" class="item-form" novalidate>
               <label>
-                店舗ラベル
+                店舗ラベル <b class="required-mark">必須</b>
                 <input id="storeLabel" type="text" placeholder="店名/検索元地点名" required />
               </label>
               <label>
-                品物
+                品物 <b class="required-mark">必須</b>
                 <input id="itemName" type="text" placeholder="例: 牛乳 1L" required />
               </label>
               <label>
-                価格
+                価格 <b class="required-mark">必須</b>
                 <input id="itemPrice" type="number" min="0" step="1" placeholder="198" required />
               </label>
               <fieldset class="sale-field">
                 <legend>セール設定</legend>
                 <div class="sale-options">
                   <label class="schedule-label" for="saleMode">
-                    <span>周期</span>
+                    <span>周期 <b class="required-mark">必須</b></span>
                     <select id="saleMode">
                       <option value="once">単発</option>
                       <option value="weekly">毎週</option>
@@ -1924,11 +1974,12 @@
                     </select>
                   </label>
                   <label id="saleDateWrap" class="schedule-label" for="saleDate">
-                    <span>日付</span>
+                    <span>日付 <b id="saleDateRequired" class="required-mark">必須</b></span>
                     <input id="saleDate" class="schedule-field" type="date" required />
+                    <span id="saleDateError" class="field-error" aria-live="polite"></span>
                   </label>
                   <label id="saleWeekdayWrap" class="schedule-label hidden" for="saleWeekday">
-                    <span>曜日</span>
+                    <span>曜日 <b class="required-mark">必須</b></span>
                     <select id="saleWeekday" class="schedule-field" multiple size="4">
                       <option value="0">日曜日</option>
                       <option value="1">月曜日</option>
@@ -1940,11 +1991,11 @@
                     </select>
                   </label>
                   <label id="saleMonthDayWrap" class="schedule-label hidden" for="saleMonthDay">
-                    <span>日にち</span>
+                    <span>日にち <b class="required-mark">必須</b></span>
                     <input id="saleMonthDay" class="schedule-field" type="text" inputmode="numeric" placeholder="例: 10,20,30" />
                   </label>
                   <label id="saleEndDateWrap" class="schedule-label hidden" for="saleEndDate">
-                    <span>終了日</span>
+                    <span>終了日 <b class="required-mark">必須</b></span>
                     <input id="saleEndDate" class="schedule-field" type="date" />
                   </label>
                 </div>
@@ -1954,10 +2005,10 @@
                 <input id="itemNote" type="text" placeholder="例: アプリ会員限定" />
               </label>
               <details class="share-details">
-                <summary>共有設定</summary>
-                <p class="share-note">店名・商品名・価格・割引日だけ共有されます。個人情報や店舗ラベルは共有されません。</p>
+                <summary>この割引情報を共有する</summary>
+                <p class="share-note">店名・商品名・価格・割引日のみ共有されます。個人情報や店舗ラベルは共有されません。</p>
                 <label class="share-toggle">
-                  <input id="shareDiscount" type="checkbox" />
+                  <input id="shareDiscount" type="checkbox" aria-label="この割引情報を共有する" />
                   同じ店舗のユーザーへ共有する
                 </label>
               </details>
@@ -2107,6 +2158,7 @@
         saleMode: document.querySelector("#saleMode"),
         saleDateWrap: document.querySelector("#saleDateWrap"),
         saleDate: document.querySelector("#saleDate"),
+        saleDateError: document.querySelector("#saleDateError"),
         saleWeekdayWrap: document.querySelector("#saleWeekdayWrap"),
         saleWeekday: document.querySelector("#saleWeekday"),
         saleMonthDayWrap: document.querySelector("#saleMonthDayWrap"),
@@ -2308,7 +2360,8 @@
           throw new Error(message || `Supabase request failed: ${response.status}`);
         }
         if (response.status === 204) return null;
-        return response.json();
+        const text = await response.text();
+        return text ? JSON.parse(text) : null;
       }
 
       async function authRequest(path, body) {
@@ -2679,7 +2732,7 @@
       }
 
       async function clearNotesFromSupabase() {
-        await supabaseRequest(`${SUPABASE_TABLE}?id=not.is.null`, {
+        await supabaseRequest(`${SUPABASE_TABLE}?user_id=eq.${encodeURIComponent(state.user.id)}`, {
           method: "DELETE",
           headers: { Prefer: "return=minimal" },
         });
@@ -2782,6 +2835,19 @@
         elements.saleWeekday.required = mode === "weekly";
         elements.saleMonthDay.required = mode === "monthly";
         elements.saleEndDate.required = mode === "range";
+        clearSaleDateError();
+      }
+
+      function clearSaleDateError() {
+        elements.saleDateWrap.classList.remove("has-error");
+        if (elements.saleDateError) elements.saleDateError.textContent = "";
+      }
+
+      function showSaleDateError(message, target = elements.saleDate) {
+        elements.saleDateWrap.classList.add("has-error");
+        if (elements.saleDateError) elements.saleDateError.textContent = message;
+        setStatus("error", message);
+        target.focus();
       }
 
       function distanceMeters(fromLat, fromLon, toLat, toLon) {
@@ -2906,7 +2972,7 @@
             <span class="type-pill ${store.type}">${typeLabel(store.type)}</span>
             <strong>${escapeHtml(store.name)}</strong>
             <small>${formatDistance(store.distance)}${store.address ? ` ・ ${escapeHtml(store.address)}` : ""}</small>
-            <small>${noteCount}件の価格メモ</small>
+            <small>${noteCount}件の割引メモ</small>
           `;
           card.addEventListener("click", () => {
             state.selectedStoreId = store.id;
@@ -2941,7 +3007,7 @@
         elements.notes.innerHTML = "";
 
         if (!notes.length) {
-          elements.notes.innerHTML = '<div class="blank-row">この店舗にはまだ価格メモがありません。</div>';
+          elements.notes.innerHTML = '<div class="blank-row">この店舗にはまだ割引メモがありません。</div>';
           return;
         }
 
@@ -3067,10 +3133,10 @@
           const shareControl = note.isShared
             ? ""
             : `<details class="share-details">
-                <summary>共有設定</summary>
-                <p class="share-note">店名・商品名・価格・割引日だけ共有されます。個人情報や店舗ラベルは共有されません。</p>
+                <summary>この割引情報を共有する</summary>
+                <p class="share-note">店名・商品名・価格・割引日のみ共有されます。個人情報や店舗ラベルは共有されません。</p>
                 <label class="share-toggle">
-                  <input type="checkbox" data-action="toggle-share" ${note.shareEnabled ? "checked" : ""} />
+                  <input type="checkbox" data-action="toggle-share" aria-label="この割引情報を共有する" ${note.shareEnabled ? "checked" : ""} />
                   同じ店舗のユーザーへ共有
                 </label>
               </details>`;
@@ -3221,6 +3287,8 @@
 
       elements.sortSelect.addEventListener("change", render);
       elements.saleMode.addEventListener("change", syncScheduleFields);
+      elements.saleDate.addEventListener("input", clearSaleDateError);
+      elements.saleEndDate.addEventListener("input", clearSaleDateError);
 
       elements.chips.forEach((chip) => {
         chip.addEventListener("click", () => {
@@ -3362,19 +3430,41 @@
         const saleMode = elements.saleMode.value;
         const saleWeekdays = selectedWeekdays();
         const saleMonthDays = normalizeCsvNumbers(elements.saleMonthDay.value, 1, 31).join(",");
+        clearSaleDateError();
+        if (!elements.storeLabel.value.trim()) {
+          setStatus("error", "店舗ラベルを入力してください。");
+          elements.storeLabel.focus();
+          return;
+        }
+        if (!elements.itemName.value.trim()) {
+          setStatus("error", "品物を入力してください。");
+          elements.itemName.focus();
+          return;
+        }
+        if (!Number.isFinite(Number(elements.itemPrice.value)) || Number(elements.itemPrice.value) < 0) {
+          setStatus("error", "価格を入力してください。");
+          elements.itemPrice.focus();
+          return;
+        }
+        if (saleMode === "once" && !elements.saleDate.value) {
+          showSaleDateError("単発セールの日付を入力してください");
+          return;
+        }
         if (saleMode === "weekly" && !saleWeekdays) {
           setStatus("error", "毎週の割引は曜日を1つ以上選んでください。");
+          elements.saleWeekday.focus();
           return;
         }
         if (saleMode === "monthly" && !saleMonthDays) {
           setStatus("error", "毎月の割引は1〜31の日にちを入力してください。例: 10,20,30");
+          elements.saleMonthDay.focus();
           return;
         }
         if (saleMode === "range") {
           const start = parseDateOnly(elements.saleDate.value);
           const end = parseDateOnly(elements.saleEndDate.value);
           if (!start || !end || end < start) {
-            setStatus("error", "期間割引は開始日と終了日を正しく入力してください。");
+            showSaleDateError("期間割引は開始日と終了日を正しく入力してください", !start ? elements.saleDate : elements.saleEndDate);
             return;
           }
         }
@@ -3397,25 +3487,27 @@
           note: elements.itemNote.value.trim(),
           createdAt: new Date().toLocaleDateString("ja-JP"),
         };
-        allNotes[store.id] = [
-          newNote,
-          ...(allNotes[store.id] || []),
-        ];
-        state.notes = allNotes;
-        saveDiscountCache();
-        elements.itemForm.reset();
-        syncScheduleFields();
-        render();
         try {
           const labelsPersisted = await insertNoteToSupabase(store.id, newNote);
+          allNotes[store.id] = [
+            newNote,
+            ...(allNotes[store.id] || []),
+          ];
+          state.notes = allNotes;
+          saveDiscountCache();
+          elements.itemForm.reset();
+          elements.shareDiscount.checked = false;
+          syncScheduleFields();
+          render();
           setStatus(
             labelsPersisted ? "ready" : "error",
             labelsPersisted
               ? "Supabaseへ割引情報を保存しました。"
               : "割引情報は保存しましたが、店舗ラベル列が未作成のためラベルはDB保存されません。supabase_user_auth_schema.sqlを実行してください。",
           );
-        } catch {
-          setStatus("error", "Supabaseへの保存に失敗しました。テーブル作成SQLとRLSポリシーを確認してください。");
+        } catch (error) {
+          console.error(error);
+          setStatus("error", "Supabaseへの保存に失敗しました。画面には追加していません。テーブル作成SQLとRLSポリシーを確認してください。");
         }
       });
 
@@ -3424,12 +3516,20 @@
           setStatus("error", "割引情報を削除するにはログインしてください。");
           return;
         }
-        state.notes = {};
-        saveDiscountCache();
-        render();
+        const ownRows = getDiscountRows().filter((note) => !note.isShared);
+        const count = ownRows.length;
+        if (!count) {
+          setStatus("ready", "削除できる保存済み割引はありません。");
+          return;
+        }
+        const message = `保存済み割引${count}件を削除します。ログイン中のため、クラウド上の自分の割引メモも削除されます。よろしいですか？`;
+        if (!confirm(message)) return;
         try {
           await clearNotesFromSupabase();
-          setStatus("ready", "Supabase上の保存済み価格メモを全削除しました。");
+          state.notes = {};
+          saveDiscountCache();
+          render();
+          setStatus("ready", "Supabase上の保存済み割引を全削除しました。");
         } catch {
           setStatus("error", "Supabaseの全削除に失敗しました。テーブル権限を確認してください。");
         }
