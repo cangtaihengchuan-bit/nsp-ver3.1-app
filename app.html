@@ -703,6 +703,8 @@
       .stores,
       .workspace {
         min-height: 640px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .stores {
@@ -977,9 +979,10 @@
 
       @media (max-width: 640px) {
         .app {
-          width: min(370px, calc(100vw - 20px));
+          width: auto;
+          max-width: none;
           margin-left: 10px;
-          margin-right: auto;
+          margin-right: 10px;
         }
 
         .hero h1 {
@@ -1085,7 +1088,8 @@
         }
 
         .app {
-          width: min(100% - 18px, 1180px);
+          width: auto;
+          max-width: none;
           padding-top: 9px;
         }
 
@@ -1093,6 +1097,12 @@
         .stores,
         .workspace {
           padding: 14px;
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        .main-grid {
+          grid-template-columns: minmax(0, 1fr);
         }
 
         .control-row,
@@ -1124,17 +1134,17 @@
         h1 {
           font-size: 1.74rem;
           line-height: 1.18;
-          max-width: calc(100vw - 74px);
+          max-width: 100%;
           word-break: break-all;
         }
 
         .lead {
-          max-width: calc(100vw - 74px);
+          max-width: 100%;
           font-size: 0.96rem;
         }
 
         .hero-controls {
-          max-width: calc(100vw - 46px);
+          max-width: 100%;
         }
 
         .proof-list {
@@ -1906,7 +1916,7 @@
             <summary>共有された割引情報を表示する</summary>
             <p class="share-note">店名・商品名・価格・割引日だけを扱います。個人情報や店舗ラベルは共有されません。</p>
             <label class="share-toggle">
-              <input id="acceptSharedDiscounts" type="checkbox" />
+              <input id="acceptSharedDiscounts" type="checkbox" aria-label="共有された割引情報を表示する" />
               他アカウントから共有された割引情報を受け取る
             </label>
           </details>
