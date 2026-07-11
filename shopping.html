@@ -237,6 +237,27 @@
         font-weight: 900;
       }
 
+      .shopping-feedback {
+        grid-column: 1 / -1;
+        padding: 11px 12px;
+        border: 1px solid color-mix(in srgb, var(--mint) 55%, var(--line));
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--mint) 14%, var(--field));
+        color: var(--ink);
+        font-size: 0.9rem;
+        font-weight: 900;
+        line-height: 1.5;
+      }
+
+      .shopping-feedback[hidden] {
+        display: none;
+      }
+
+      .shopping-feedback.is-warning {
+        border-color: color-mix(in srgb, var(--coral) 55%, var(--line));
+        background: color-mix(in srgb, var(--coral) 12%, var(--field));
+      }
+
       .shopping-sync-status[hidden] {
         display: none;
       }
@@ -852,6 +873,7 @@
           <span id="shoppingSyncText">買い物情報を読み込んでいます</span>
           <button id="shoppingReloadButton" class="sync-reload-button" type="button" hidden>再読み込み</button>
         </section>
+        <p id="shoppingFeedback" class="shopping-feedback" hidden aria-live="polite"></p>
 
         <section class="budget-summary" aria-label="今日の買い物予算">
           <div class="budget-card">
@@ -979,6 +1001,7 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndueHBoanJpY293enhia3dubWp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5MDk5ODMsImV4cCI6MjA5NzQ4NTk4M30.p6lu6gNpdkTg0Nvnxj05m2tHbYeihYP7jFPdIEWfSxo";
       const HOUSEHOLD_SHOPPING_TABLE = "nsp_household_shopping_items";
       const HOUSEHOLD_RECURRING_TABLE = "nsp_household_recurring_items";
+      const HOUSEHOLD_RECORDS_TABLE = "nsp_household_records";
       const SESSION_KEY = "kaimono-clock-session-v2";
       const DISCOUNT_CACHE_KEY_PREFIX = "kaimono-clock-discount-cache-v2";
       const THEME_KEY = "kaimono-clock-theme";
@@ -1039,6 +1062,7 @@
         syncStatus: document.querySelector("#shoppingSyncStatus"),
         syncText: document.querySelector("#shoppingSyncText"),
         reloadButton: document.querySelector("#shoppingReloadButton"),
+        feedback: document.querySelector("#shoppingFeedback"),
         quickItemChips: document.querySelector("#quickItemChips"),
         quickAmountChips: document.querySelector("#quickAmountChips"),
         candidates: document.querySelector("#discountCandidates"),
@@ -1472,6 +1496,73 @@
         localStorage.setItem(RECURRING_KEY, JSON.stringify(state.recurringItems));
       }
 
+      function loadExpenses() {
+        return loadJson(EXPENSES_KEY, []);
+      }
+
+      function saveExpenses(expenses) {
+        localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+      }
+
+      function householdRecordToRow(item) {
+        return {
+          id: item.id,
+          user_id: currentUserId(),
+          record_type: "expense",
+          record_date: item.date,
+          category: item.category,
+          title: item.title,
+          amount: item.amount
+        };
+      }
+
+      async function syncHouseholdExpense(item) {
+        if (!currentUserId()) return;
+        await supabaseRequest(HOUSEHOLD_RECORDS_TABLE, {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: JSON.stringify(householdRecordToRow(item))
+        });
+      }
+
+      async function addHouseholdExpenseFromShopping(item, options = {}) {
+        const amount = Math.max(0, Number(options.amount ?? item.amount ?? item.estimatedAmount) || 0);
+        if (!item.title || amount <= 0) {
+          showShoppingFeedback(`${item.title || "購入品"}は金額が未入力のため、家計簿には反映していません。`, true);
+          return null;
+        }
+
+        const expenses = loadExpenses();
+        if (item.householdExpenseId && expenses.some((expense) => expense.id === item.householdExpenseId)) {
+          showShoppingFeedback(`${item.title}はすでに家計簿へ反映済みです。`);
+          return expenses.find((expense) => expense.id === item.householdExpenseId);
+        }
+
+        const expense = {
+          id: item.householdExpenseId || crypto.randomUUID(),
+          date: options.date || dateKey(new Date()),
+          category: options.category || item.category || "unknown",
+          title: item.title,
+          amount
+        };
+        item.householdExpenseId = expense.id;
+        saveExpenses([...expenses, expense]);
+
+        try {
+          await syncHouseholdExpense(expense);
+          showShoppingFeedback(`${expense.title}を家計簿に支出として反映しました。`);
+        } catch {
+          showShoppingFeedback(`${expense.title}を家計簿に反映しました。クラウド同期は未完了です。`, true);
+        }
+        return expense;
+      }
+
+      function showShoppingFeedback(message, warning = false) {
+        els.feedback.textContent = message;
+        els.feedback.classList.toggle("is-warning", warning);
+        els.feedback.hidden = false;
+      }
+
       function loadDiscountCache() {
         const userId = currentUserId();
         if (!userId) return [];
@@ -1524,10 +1615,15 @@
         });
       }
 
-      function toggleShoppingItem(id, checked) {
+      async function toggleShoppingItem(id, checked) {
         const item = state.shoppingItems.find((entry) => entry.id === id);
         if (!item) return;
         item.checked = checked;
+        if (checked) {
+          await addHouseholdExpenseFromShopping(item);
+        } else {
+          showShoppingFeedback(`${item.title}を未購入に戻しました。家計簿に反映済みの支出は残しています。`);
+        }
         saveShoppingItems();
         syncShoppingItem(item).catch(() => null);
         renderBudgetSummary();
@@ -1561,10 +1657,20 @@
         renderRecurring();
       }
 
-      function markRecurringPurchased(id) {
+      async function markRecurringPurchased(id) {
         const item = state.recurringItems.find((entry) => entry.id === id);
         if (!item) return;
-        item.lastPurchasedDate = dateKey(new Date());
+        const today = dateKey(new Date());
+        if (item.lastHouseholdExpenseDate !== today) {
+          item.householdExpenseId = "";
+        }
+        await addHouseholdExpenseFromShopping(item, {
+          amount: item.estimatedAmount,
+          category: "daily",
+          date: today
+        });
+        item.lastHouseholdExpenseDate = today;
+        item.lastPurchasedDate = today;
         saveRecurringItems();
         syncRecurringItem(item).catch(() => null);
         renderRecurring();
