@@ -73,7 +73,7 @@
       }
 
       .auth-box {
-        width: min(100%, 430px);
+        width: min(100%, 300px);
         display: grid;
         gap: 8px;
         margin-left: auto;
@@ -83,10 +83,42 @@
         background: rgba(255, 253, 247, 0.9);
       }
 
+      .auth-box summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--ink);
+        font-size: 0.9rem;
+        font-weight: 900;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .auth-box summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .auth-box summary::after {
+        content: "開く";
+        color: var(--muted);
+        font-size: 0.76rem;
+      }
+
+      .auth-box[open] summary::after {
+        content: "閉じる";
+      }
+
+      .auth-tools {
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
       .auth-status {
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
         gap: 8px;
         color: var(--muted);
         font-size: 0.86rem;
@@ -165,6 +197,7 @@
         font-size: clamp(2rem, 7vw, 4.2rem);
         line-height: 1.05;
         letter-spacing: 0;
+        overflow-wrap: anywhere;
       }
 
       p {
@@ -173,6 +206,40 @@
         color: var(--muted);
         font-weight: 800;
         line-height: 1.8;
+        overflow-wrap: anywhere;
+      }
+
+      .hero-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .flow-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .flow-step {
+        display: grid;
+        gap: 5px;
+        min-height: 104px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--paper) 90%, transparent);
+      }
+
+      .flow-step strong {
+        font-size: 0.98rem;
+      }
+
+      .flow-step span {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1.45;
       }
 
       .actions {
@@ -207,6 +274,10 @@
         font-size: 0.86rem;
       }
 
+      .secondary-link {
+        min-height: 52px;
+      }
+
       @media (max-width: 760px) {
         body {
           align-items: start;
@@ -215,7 +286,8 @@
 
         main {
           width: min(390px, calc(100% - 20px));
-          margin-inline: auto;
+          margin-left: 10px;
+          margin-right: auto;
           padding: 14px;
         }
 
@@ -234,12 +306,14 @@
         }
 
         .auth-form,
+        .hero-actions,
+        .flow-strip,
         .actions {
           grid-template-columns: 1fr;
         }
 
         h1 {
-          font-size: clamp(2rem, 13vw, 3.1rem);
+          font-size: clamp(2rem, 11vw, 2.65rem);
         }
       }
       :root {
@@ -374,7 +448,8 @@
       }
 
       html[data-theme] main,
-      html[data-theme] .auth-box {
+      html[data-theme] .auth-box,
+      html[data-theme] .flow-step {
         border-color: var(--line);
         background: color-mix(in srgb, var(--paper) 86%, transparent);
       }
@@ -432,48 +507,75 @@
           <strong>Kaimono Clock</strong>
         </div>
 
-        <section id="authBox" class="auth-box" aria-label="ログイン">
-          <label class="theme-control">
-            <span>カラー</span>
-            <select data-theme-select aria-label="テーマカラー">
-              <option value="warm">暖色</option>
-              <option value="cool">寒色</option>
-              <option value="white-blue">白青</option>
-            </select>
-          </label>
-          <div class="auth-status">
-            <span id="authDot" class="dot"></span>
-            <span id="authStatus">未ログイン</span>
+        <details id="authBox" class="auth-box" aria-label="ログイン">
+          <summary>保存・同期する</summary>
+          <div class="auth-tools">
+            <label class="theme-control">
+              <span>カラー</span>
+              <select data-theme-select aria-label="テーマカラー">
+                <option value="warm">暖色</option>
+                <option value="cool">寒色</option>
+                <option value="white-blue">白青</option>
+              </select>
+            </label>
+            <div class="auth-status">
+              <span id="authDot" class="dot"></span>
+              <span id="authStatus">未ログイン</span>
+            </div>
+            <form id="authForm" class="auth-form">
+              <input id="authEmail" type="email" autocomplete="email" placeholder="メール" required />
+              <input id="authPassword" type="password" autocomplete="current-password" placeholder="パスワード" required />
+              <button type="submit">ログイン</button>
+            </form>
+            <div class="auth-session">
+              <span id="authUser"></span>
+              <button id="logoutBtn" class="logout-btn" type="button">ログアウト</button>
+            </div>
           </div>
-          <form id="authForm" class="auth-form">
-            <input id="authEmail" type="email" autocomplete="email" placeholder="メール" required />
-            <input id="authPassword" type="password" autocomplete="current-password" placeholder="パスワード" required />
-            <button type="submit">ログイン</button>
-          </form>
-          <div class="auth-session">
-            <span id="authUser"></span>
-            <button id="logoutBtn" class="logout-btn" type="button">ログアウト</button>
-          </div>
-        </section>
+        </details>
       </div>
 
-      <h1>割引メモと家計を、ひとつの体験で。</h1>
+      <h1>生活費を見ながら、買い物を決める。</h1>
       <p>
-        近くのお店の割引メモを保存し、同じ情報を家計簿カレンダーでも確認できます。
-        スマホからすぐ開けて、必要なものと残り予算を軽く見直せます。
+        一人暮らしの食費・日用品・交通費を、買う前と買った後に短時間で確認できます。
+        ログインしなくても、まずは買い物メモと割引メモを試せます。
       </p>
+      <div class="hero-actions">
+        <a class="primary" href="./shopping.html">
+          ログインせずに体験
+          <span>買い物予定と予算の目安を確認</span>
+        </a>
+        <a class="secondary-link" href="./app.html">
+          サンプルで試す
+          <span>近くの割引メモを見る</span>
+        </a>
+      </div>
+      <section class="flow-strip" aria-label="使い方の流れ">
+        <div class="flow-step">
+          <strong>割引情報を確認</strong>
+          <span>よく行く店の価格やセール日をメモします。</span>
+        </div>
+        <div class="flow-step">
+          <strong>買い物メモに追加</strong>
+          <span>必要なものと目安金額を買う前に整理します。</span>
+        </div>
+        <div class="flow-step">
+          <strong>支出として記録</strong>
+          <span>買った後は家計簿に入れて、残り予算を確認します。</span>
+        </div>
+      </section>
       <div class="actions">
-        <a class="primary" href="./app.html">
+        <a href="./app.html">
           割引メモを開く
-          <span>お店別の割引情報を登録</span>
+          <span>安く買えるものを確認</span>
         </a>
         <a href="./household.html">
           家計簿を開く
-          <span>支出と割引予定をカレンダーで確認</span>
+          <span>今月の生活費と残り予算</span>
         </a>
         <a href="./shopping.html">
           買い物メモを開く
-          <span>割引候補から必要なものを追加</span>
+          <span>買い物予定が予算内か確認</span>
         </a>
       </div>
     </main>

@@ -77,7 +77,7 @@ button {
 
 .top-bar {
   display: grid;
-  grid-template-columns: minmax(230px, 1.35fr) minmax(165px, 0.75fr) repeat(4, minmax(126px, 0.55fr));
+  grid-template-columns: minmax(230px, 1.35fr) minmax(165px, 0.75fr) repeat(3, minmax(126px, 0.55fr));
   gap: 14px;
   align-items: stretch;
   padding: 16px;
@@ -127,6 +127,7 @@ h1 {
   margin-bottom: 0;
   font-size: clamp(1.45rem, 2.2vw, 2rem);
   line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 h2 {
@@ -263,6 +264,10 @@ h3 {
   line-height: 1;
 }
 
+.secondary-stat[hidden] {
+  display: none;
+}
+
 .remaining strong {
   color: var(--mint-dark);
 }
@@ -297,6 +302,27 @@ h3 {
   display: block;
 }
 
+.receipt-helper-copy {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.feature-pill {
+  display: inline-grid;
+  min-height: 28px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 9px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
 .daily-budget strong {
   color: var(--coral);
   font-size: 1.7rem;
@@ -329,6 +355,8 @@ h3 {
 
 .tab-button {
   min-height: 38px;
+  white-space: normal;
+  overflow-wrap: anywhere;
   border: 0;
   border-radius: 8px;
   padding: 0 16px;
@@ -1425,7 +1453,7 @@ h3 {
     width: min(370px, calc(100vw - 20px));
     max-width: 370px;
     margin-right: auto;
-    margin-left: auto;
+    margin-left: 10px;
     padding-top: 10px;
   }
 
@@ -2247,7 +2275,7 @@ h3 {
           </div>
           <div>
             <p class="eyebrow">Month Mate</p>
-            <h1>今月の支出ノート</h1>
+            <h1>今月の生活費</h1>
           </div>
         </div>
 
@@ -2279,7 +2307,7 @@ h3 {
           <span>使った金額</span>
           <strong id="spentTotal">¥0</strong>
         </div>
-        <div class="stat-tile income">
+        <div class="stat-tile income secondary-stat" hidden>
           <span>今月の収入</span>
           <strong id="incomeTotal">¥0</strong>
         </div>
@@ -2410,9 +2438,10 @@ h3 {
           <div class="section-head">
             <div>
               <p class="eyebrow">Receipt</p>
-              <h2>レシート入力補助</h2>
+              <h2>レシートから入力</h2>
+              <p class="receipt-helper-copy">撮影して支出入力の手間を減らす追加機能です。読み取り結果は確認してから登録します。</p>
             </div>
-            <span id="receiptStatus" class="report-note">画像を選択</span>
+            <span id="receiptStatus" class="feature-pill">入力補助</span>
           </div>
           <form id="receiptForm" class="receipt-form">
             <label>

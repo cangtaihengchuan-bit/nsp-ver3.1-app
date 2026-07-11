@@ -197,6 +197,7 @@
       h1 {
         font-size: clamp(1.55rem, 3vw, 2.5rem);
         line-height: 1.15;
+        overflow-wrap: anywhere;
       }
 
       .top-note {
@@ -215,6 +216,82 @@
 
       .panel {
         padding: 16px;
+      }
+
+      .budget-summary {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .budget-card {
+        min-height: 86px;
+        display: grid;
+        gap: 6px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--field);
+      }
+
+      .budget-card span {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 900;
+      }
+
+      .budget-card strong {
+        font-size: clamp(1.35rem, 4vw, 1.9rem);
+        line-height: 1;
+      }
+
+      .budget-card.remaining strong {
+        color: var(--mint);
+      }
+
+      .budget-card.is-over strong {
+        color: var(--coral);
+      }
+
+      .quick-add {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 14px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--field) 86%, transparent);
+      }
+
+      .quick-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 900;
+      }
+
+      .quick-chip-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+        gap: 8px;
+      }
+
+      .quick-chip,
+      .amount-chip {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0 10px;
+        color: var(--ink);
+        background: var(--surface);
+        font-weight: 900;
+        cursor: pointer;
+        overflow-wrap: anywhere;
+        white-space: normal;
       }
 
       .recurring-panel {
@@ -522,6 +599,8 @@
       html[data-theme] .experience-nav,
       html[data-theme] .top-bar,
       html[data-theme] .panel,
+      html[data-theme] .budget-card,
+      html[data-theme] .quick-add,
       html[data-theme] .shopping-item,
       html[data-theme] .discount-candidate,
       html[data-theme] .recurring-item,
@@ -556,6 +635,12 @@
       }
 
       @media (max-width: 860px) {
+        .app-shell {
+          width: min(370px, calc(100vw - 20px));
+          margin-left: 10px;
+          margin-right: auto;
+        }
+
         .mobile-menu-btn {
           position: sticky;
           top: 10px;
@@ -576,7 +661,8 @@
 
         .experience-nav,
         .top-bar,
-        .layout {
+        .layout,
+        .budget-summary {
           grid-template-columns: 1fr;
         }
 
@@ -655,6 +741,15 @@
           min-height: 48px;
           padding: 4px;
         }
+
+        h1 {
+          font-size: clamp(1.5rem, 8vw, 2rem);
+        }
+
+        .quick-title {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -697,10 +792,25 @@
           <p class="eyebrow">Shopping</p>
           <h1>買い物メモ</h1>
         </div>
-        <p class="top-note">割引メモの商品を候補から追加できます。</p>
+        <p class="top-note">買う前に予定金額を見て、生活費の残りと合わせて確認します。</p>
       </header>
 
       <main class="layout">
+        <section class="budget-summary" aria-label="今日の買い物予算">
+          <div class="budget-card">
+            <span>今日使える目安</span>
+            <strong id="dailyBudgetEstimate">¥0</strong>
+          </div>
+          <div class="budget-card">
+            <span>買い物予定</span>
+            <strong id="plannedShoppingTotal">¥0</strong>
+          </div>
+          <div id="plannedRemainingCard" class="budget-card remaining">
+            <span>残り</span>
+            <strong id="plannedRemaining">¥0</strong>
+          </div>
+        </section>
+
         <section class="panel" aria-label="買い物メモ">
           <div class="section-head">
             <div>
@@ -709,6 +819,14 @@
             </div>
             <span id="shoppingCount" class="report-note">0件</span>
           </div>
+          <section class="quick-add" aria-label="クイック追加">
+            <div class="quick-title">
+              <span>クイック追加</span>
+              <span>よく買うものを入力に反映</span>
+            </div>
+            <div id="quickItemChips" class="quick-chip-row"></div>
+            <div id="quickAmountChips" class="quick-chip-row" aria-label="金額候補"></div>
+          </section>
           <form id="shoppingForm" class="shopping-form">
             <label>
               買うもの
@@ -808,6 +926,24 @@
       const THEME_KEY = "kaimono-clock-theme";
       const SHOPPING_KEY = "monthMateShoppingItems";
       const RECURRING_KEY = "monthMateRecurringItems";
+      const MONTHLY_BUDGETS_KEY = "monthMateMonthlyBudgets";
+      const LEGACY_BUDGET_KEY = "monthMateBudget";
+      const EXPENSES_KEY = "monthMateExpenses";
+      const FIXED_COSTS_KEY = "monthMateFixedCosts";
+
+      const quickItems = [
+        { title: "飲み物", category: "food", amount: 150 },
+        { title: "昼食", category: "food", amount: 500 },
+        { title: "米・パン", category: "food", amount: 400 },
+        { title: "卵", category: "food", amount: 250 },
+        { title: "牛乳", category: "food", amount: 220 },
+        { title: "冷凍食品", category: "food", amount: 300 },
+        { title: "洗剤", category: "daily", amount: 400 },
+        { title: "トイレットペーパー", category: "daily", amount: 500 },
+        { title: "文房具", category: "study", amount: 300 },
+        { title: "交通費", category: "transport", amount: 300 }
+      ];
+      const quickAmounts = [100, 300, 500, 1000];
 
       const yen = new Intl.NumberFormat("ja-JP", {
         style: "currency",
@@ -835,6 +971,12 @@
         category: document.querySelector("#shoppingCategory"),
         list: document.querySelector("#shoppingList"),
         count: document.querySelector("#shoppingCount"),
+        dailyBudgetEstimate: document.querySelector("#dailyBudgetEstimate"),
+        plannedShoppingTotal: document.querySelector("#plannedShoppingTotal"),
+        plannedRemaining: document.querySelector("#plannedRemaining"),
+        plannedRemainingCard: document.querySelector("#plannedRemainingCard"),
+        quickItemChips: document.querySelector("#quickItemChips"),
+        quickAmountChips: document.querySelector("#quickAmountChips"),
         candidates: document.querySelector("#discountCandidates"),
         candidateCount: document.querySelector("#candidateCount"),
         recurringForm: document.querySelector("#recurringForm"),
@@ -861,6 +1003,7 @@
           .map((category) => `<option value="${category.id}">${category.label}</option>`)
           .join("");
         els.recurringLastDate.value = dateKey(new Date());
+        renderQuickAdd();
         els.form.addEventListener("submit", addShoppingItemFromForm);
         els.recurringForm.addEventListener("submit", addRecurringItemFromForm);
         els.prevRecurringMonth.addEventListener("click", () => moveRecurringMonth(-1));
@@ -1241,6 +1384,7 @@
         maybeUpdateRecurringPurchaseFromShopping(item.title);
         addShoppingItem(item);
         els.form.reset();
+        els.category.value = "food";
       }
 
       function addShoppingItem(item) {
@@ -1269,6 +1413,7 @@
         item.checked = checked;
         saveShoppingItems();
         syncShoppingItem(item).catch(() => null);
+        renderBudgetSummary();
         renderShopping();
       }
 
@@ -1276,6 +1421,7 @@
         state.shoppingItems = state.shoppingItems.filter((item) => item.id !== id);
         saveShoppingItems();
         deleteShoppingItemFromSupabase(id).catch(() => null);
+        renderBudgetSummary();
         renderShopping();
       }
 
@@ -1336,9 +1482,83 @@
 
       function render() {
         state.discounts = loadDiscountCache();
+        renderBudgetSummary();
         renderShopping();
         renderDiscountCandidates();
         renderRecurring();
+      }
+
+      function renderQuickAdd() {
+        els.quickItemChips.innerHTML = quickItems.map((item) => {
+          return `<button class="quick-chip" type="button" data-title="${escapeHtml(item.title)}" data-category="${escapeHtml(item.category)}" data-amount="${item.amount}">${escapeHtml(item.title)}</button>`;
+        }).join("");
+        els.quickAmountChips.innerHTML = quickAmounts.map((amount) => {
+          return `<button class="amount-chip" type="button" data-amount="${amount}">${yen.format(amount)}</button>`;
+        }).join("");
+        els.quickItemChips.querySelectorAll("button").forEach((button) => {
+          button.addEventListener("click", () => {
+            els.title.value = button.dataset.title || "";
+            els.category.value = button.dataset.category || "food";
+            if (!els.amount.value) els.amount.value = button.dataset.amount || "";
+            els.title.focus();
+          });
+        });
+        els.quickAmountChips.querySelectorAll("button").forEach((button) => {
+          button.addEventListener("click", () => {
+            els.amount.value = button.dataset.amount || "";
+            els.amount.focus();
+          });
+        });
+      }
+
+      function renderBudgetSummary() {
+        const daily = todayBudgetEstimate();
+        const planned = state.shoppingItems
+          .filter((item) => !item.checked)
+          .reduce((total, item) => total + Math.max(0, Number(item.amount) || 0), 0);
+        const remaining = daily - planned;
+        els.dailyBudgetEstimate.textContent = yen.format(daily);
+        els.plannedShoppingTotal.textContent = yen.format(planned);
+        els.plannedRemaining.textContent = yen.format(remaining);
+        els.plannedRemainingCard.classList.toggle("is-over", remaining < 0);
+      }
+
+      function todayBudgetEstimate() {
+        const today = new Date();
+        const budget = budgetForMonth(today);
+        const spent = currentMonthExpenseTotal(today);
+        const remaining = budget - spent;
+        const remainingDays = remainingDaysInMonth(today);
+        return Math.floor(Math.max(0, remaining) / remainingDays);
+      }
+
+      function budgetForMonth(date) {
+        const budgets = loadJson(MONTHLY_BUDGETS_KEY, {});
+        return Number(budgets[monthKey(date)]) || Number(localStorage.getItem(LEGACY_BUDGET_KEY)) || 50000;
+      }
+
+      function currentMonthExpenseTotal(date) {
+        const expenses = loadJson(EXPENSES_KEY, []);
+        const fixedCosts = loadJson(FIXED_COSTS_KEY, []);
+        const variable = expenses
+          .filter((expense) => {
+            const expenseDate = parseDate(expense.date);
+            return expenseDate && expenseDate.getFullYear() === date.getFullYear() && expenseDate.getMonth() === date.getMonth();
+          })
+          .reduce((total, expense) => total + Math.max(0, Number(expense.amount) || 0), 0);
+        const fixed = fixedCosts
+          .filter((item) => item.active !== false)
+          .reduce((total, item) => total + Math.max(0, Number(item.amount) || 0), 0);
+        return variable + fixed;
+      }
+
+      function remainingDaysInMonth(date) {
+        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        return Math.max(1, daysInMonth - date.getDate() + 1);
+      }
+
+      function monthKey(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       }
 
       function renderShopping() {

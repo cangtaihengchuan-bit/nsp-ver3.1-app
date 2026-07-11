@@ -258,6 +258,51 @@
         gap: 9px;
       }
 
+      .location-use-note,
+      .share-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      .share-details {
+        grid-column: 1 / -1;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+        background: var(--surface-soft);
+      }
+
+      .share-details summary {
+        color: var(--ink);
+        font-weight: 900;
+        cursor: pointer;
+        list-style: none;
+        overflow-wrap: anywhere;
+      }
+
+      .share-details summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .share-details summary::after {
+        content: "開く";
+        float: right;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .share-details[open] summary::after {
+        content: "閉じる";
+      }
+
+      .share-details .share-toggle {
+        margin-top: 9px;
+      }
+
       .auth-panel {
         position: sticky;
         top: 0;
@@ -279,6 +324,13 @@
       .auth-copy h2 {
         margin: 0;
         font-size: 1.15rem;
+      }
+
+      h1,
+      h2,
+      .btn,
+      .top-note {
+        overflow-wrap: anywhere;
       }
 
       .auth-copy p {
@@ -879,6 +931,22 @@
       }
 
       @media (max-width: 640px) {
+        .app {
+          width: min(370px, calc(100vw - 20px));
+          margin-left: 10px;
+          margin-right: auto;
+        }
+
+        .hero h1 {
+          font-size: clamp(1.35rem, 7vw, 1.65rem);
+          line-height: 1.28;
+        }
+
+        .hero h1 span {
+          display: block;
+          overflow-wrap: anywhere;
+        }
+
         .mobile-menu-btn {
           position: sticky;
           top: 8px;
@@ -1515,6 +1583,7 @@
       html[data-theme] .discount-row,
       html[data-theme] .store-card,
       html[data-theme] .item-form,
+      html[data-theme] .share-details,
       html[data-theme] .blank-row {
         border-color: var(--line);
         background: color-mix(in srgb, var(--surface) 92%, transparent);
@@ -1707,11 +1776,12 @@
               </select>
             </label>
           </div>
-          <button id="locateBtn" class="btn btn-primary" type="button">近くの割引を探す</button>
+          <button id="sampleBtn" class="btn btn-primary" type="button">サンプルで試す</button>
+          <p class="location-use-note">近くの店舗を探す場合だけ、現在地を使います。</p>
+          <button id="locateBtn" class="btn btn-ghost" type="button">近くの割引を探す</button>
           <button id="savedLocationBtn" class="btn btn-ghost" type="button">登録地点から探す</button>
           <a class="btn btn-ghost" href="./household.html">家計簿を開く</a>
           <a class="btn btn-ghost" href="./shopping.html">買い物メモを開く</a>
-          <button id="sampleBtn" class="btn btn-ghost" type="button">サンプルで試す</button>
         </div>
       </section>
 
@@ -1782,10 +1852,14 @@
               <option value="all">すべての店舗ラベル</option>
             </select>
           </label>
-          <label class="share-toggle">
-            <input id="acceptSharedDiscounts" type="checkbox" />
-            他アカウントから共有された割引情報を受け取る
-          </label>
+          <details class="share-details">
+            <summary>共有設定</summary>
+            <p class="share-note">店名・商品名・価格・割引日だけを扱います。個人情報や店舗ラベルは共有されません。</p>
+            <label class="share-toggle">
+              <input id="acceptSharedDiscounts" type="checkbox" />
+              他アカウントから共有された割引情報を受け取る
+            </label>
+          </details>
         </div>
         <div id="discountList" class="discount-list"></div>
       </section>
@@ -1879,10 +1953,14 @@
                 メモ
                 <input id="itemNote" type="text" placeholder="例: アプリ会員限定" />
               </label>
-              <label class="share-toggle">
-                <input id="shareDiscount" type="checkbox" />
-                同じ店舗を登録している他ユーザーにも共有する
-              </label>
+              <details class="share-details">
+                <summary>共有設定</summary>
+                <p class="share-note">店名・商品名・価格・割引日だけ共有されます。個人情報や店舗ラベルは共有されません。</p>
+                <label class="share-toggle">
+                  <input id="shareDiscount" type="checkbox" />
+                  同じ店舗のユーザーへ共有する
+                </label>
+              </details>
               <button class="btn btn-primary" type="submit">追加</button>
             </form>
 
@@ -2988,10 +3066,14 @@
           const actionLabel = note.isShared ? "非表示" : "削除";
           const shareControl = note.isShared
             ? ""
-            : `<label class="share-toggle">
-                <input type="checkbox" data-action="toggle-share" ${note.shareEnabled ? "checked" : ""} />
-                同じ店舗のユーザーへ共有
-              </label>`;
+            : `<details class="share-details">
+                <summary>共有設定</summary>
+                <p class="share-note">店名・商品名・価格・割引日だけ共有されます。個人情報や店舗ラベルは共有されません。</p>
+                <label class="share-toggle">
+                  <input type="checkbox" data-action="toggle-share" ${note.shareEnabled ? "checked" : ""} />
+                  同じ店舗のユーザーへ共有
+                </label>
+              </details>`;
           row.innerHTML = `
             <div class="discount-main">
               <small class="muted">店舗</small>
