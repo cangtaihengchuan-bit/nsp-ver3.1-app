@@ -3554,6 +3554,9 @@
         syncScheduleFields();
         renderAuth();
         render();
+        if (new URLSearchParams(location.search).get("sample") === "1") {
+          useSample();
+        }
       }
 
       syncScheduleFields();
